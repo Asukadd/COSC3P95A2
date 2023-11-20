@@ -1,0 +1,350 @@
+# import socket
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+# # 初始化 TracerProvider
+# trace.set_tracer_provider(TracerProvider())
+# tracer = trace.get_tracer(__name__)
+
+# # 设置一个简单的控制台Span导出器
+# span_processor = BatchSpanProcessor(ConsoleSpanExporter())
+# trace.get_tracer_provider().add_span_processor(span_processor)
+
+
+# def client_sender(buffer):
+#     with tracer.start_as_current_span("client_sender") as span:
+#         span.set_attribute("message_sent", buffer) 
+#         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+#             client.connect(("localhost", 9999))
+#             client.send(buffer.encode())
+#             response = client.recv(4096)
+#             print(f"Received: {response.decode()}")
+            
+
+# if __name__ == "__main__":
+#     buffer = input("Enter message: ")
+#     client_sender(buffer)
+
+# import socket
+# import os
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+
+# import random
+# from opentelemetry.sdk.trace.sampling import AlwaysOnSampler
+# from opentelemetry.sdk.trace.sampling import Sampler, SamplingResult, Decision
+
+
+# class CustomProbabilitySampler(Sampler):
+#     def __init__(self, rate):
+#         super().__init__()
+#         self.rate = rate
+
+#     def should_sample(self, context, trace_id, span_name, span_kind, parent_context, links):
+#         if random.random() < self.rate:
+#             return SamplingResult(Decision.RECORD_AND_SAMPLE)
+#         return SamplingResult(Decision.DROP)
+
+#     def get_description(self):
+#         return f"CustomProbabilitySampler({self.rate})"
+
+
+
+
+
+# trace.set_tracer_provider(TracerProvider())
+# tracer = trace.get_tracer(__name__)
+# span_processor = BatchSpanProcessor(ConsoleSpanExporter())
+# trace.get_tracer_provider().add_span_processor(span_processor)
+
+# def send_file(client_socket, file_path):
+#     with open(file_path, 'rb') as file:
+#         while True:
+#             data = file.read(1024)
+#             if not data:
+#                 break
+#             client_socket.send(data)
+
+# def client_sender(directory):
+
+     
+#     always_on_sampler = AlwaysOnSampler()
+#     tracer_provider_always_on = TracerProvider(sampler=always_on_sampler)
+#     span_processor = BatchSpanProcessor(ConsoleSpanExporter())
+#     tracer_provider_always_on.add_span_processor(span_processor)
+#     tracer = trace.get_tracer(__name__, "always_on")
+    
+#     probability_sampler = CustomProbabilitySampler(0.4)
+#     tracer_provider_with_probability = TracerProvider(sampler=probability_sampler)
+#     span_processor_with_probability = BatchSpanProcessor(ConsoleSpanExporter())
+#     tracer_provider_with_probability.add_span_processor(span_processor_with_probability)
+#     tracer_with_probability = trace.get_tracer(__name__, "probability")
+
+
+#     with tracer.start_as_current_span("client_sender"):
+#         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+#             try:
+#                 client.connect(("localhost", 9999))
+#                 for file_name in os.listdir(directory):
+#                     file_path = os.path.join(directory, file_name)
+#                     send_file(client, file_path)
+#                     print(f"Sent {file_name}")
+#                 client.send(b"stop")
+#             except Exception as e:
+#                 print(f"Error during file transfer: {e}")
+#             finally:
+#                 print("Closing client connection")
+#                 client.close()
+
+# if __name__ == "__main__":
+#     client_sender("test_files")
+
+# 106
+# import random
+# import socket
+# import os
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+# from opentelemetry.sdk.trace.sampling import Sampler, SamplingResult, Decision
+
+# class CustomProbabilitySampler(Sampler):
+#     def __init__(self, rate):
+#         super().__init__()
+#         self.rate = rate
+
+#     def should_sample(self, context, trace_id, span_name, span_kind, parent_context, links):
+#         if random.random() < self.rate:
+#             return SamplingResult(Decision.RECORD_AND_SAMPLE)
+#         return SamplingResult(Decision.DROP)
+
+#     def get_description(self):
+#         return f"CustomProbabilitySampler({self.rate})"
+
+# # Always On Sampler (default sampler of TracerProvider)
+# tracer_provider_always_on = TracerProvider()
+# span_processor_always_on = BatchSpanProcessor(ConsoleSpanExporter())
+# tracer_provider_always_on.add_span_processor(span_processor_always_on)
+# tracer_always_on = trace.get_tracer(__name__, "always_on")
+
+# # Custom Probability Sampler (40% sampling rate)
+# probability_sampler = CustomProbabilitySampler(0.4)
+# tracer_provider_with_probability = TracerProvider(sampler=probability_sampler)
+# span_processor_with_probability = BatchSpanProcessor(ConsoleSpanExporter())
+# tracer_provider_with_probability.add_span_processor(span_processor_with_probability)
+# tracer_with_probability = trace.get_tracer(__name__, "probability")
+
+# def send_file(client_socket, file_path):
+#     with open(file_path, 'rb') as file:
+#         while True:
+#             data = file.read(1024)
+#             if not data:
+#                 break
+#             client_socket.send(data)
+
+# def client_sender(directory):
+#     with tracer_always_on.start_as_current_span("client_sender"):
+#         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+#             try:
+#                 client.connect(("localhost", 9999))
+#                 for file_name in os.listdir(directory):
+#                     file_path = os.path.join(directory, file_name)
+#                     send_file(client, file_path)
+#                     print(f"Sent {file_name}")
+#                 client.send(b"stop")
+#             except Exception as e:
+#                 print(f"Error during file transfer: {e}")
+#             finally:
+#                 print("Closing client connection")
+#                 client.close()
+
+# if __name__ == "__main__":
+#     client_sender("test_files")
+
+
+# import random
+# import socket
+# import time
+# import zlib
+# import os
+# from opentelemetry import trace
+# from opentelemetry.sdk.trace import TracerProvider
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+# from opentelemetry.sdk.trace.sampling import Sampler, SamplingResult, Decision
+# from opentelemetry.sdk.trace.export import BatchSpanProcessor
+# # from opentelemetry.exporter.jaeger import JaegerSpanExporter
+# # from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+
+
+
+# # jaeger_exporter = JaegerSpanExporter(
+# #     agent_host_name="localhost",
+# #     agent_port=6831,
+# # )
+# class CustomProbabilitySampler(Sampler):
+#     def __init__(self, rate):
+#         super().__init__()
+#         self.rate = rate
+
+#     def should_sample(self, context, trace_id, span_name, span_kind, parent_context, links):
+#         if random.random() < self.rate:
+#             return SamplingResult(Decision.RECORD_AND_SAMPLE)
+#         return SamplingResult(Decision.DROP)
+
+#     def get_description(self):
+#         return f"CustomProbabilitySampler({self.rate})"
+
+
+
+# # Always On Sampler (default sampler of TracerProvider)
+# tracer_provider_always_on = TracerProvider()
+# span_processor_always_on = BatchSpanProcessor(ConsoleSpanExporter())
+# tracer_provider_always_on.add_span_processor(span_processor_always_on)
+# tracer_always_on = trace.get_tracer(__name__, "always_on")
+
+# # Custom Probability Sampler (40% sampling rate)
+# probability_sampler = CustomProbabilitySampler(0.4)
+# tracer_provider_with_probability = TracerProvider(sampler=probability_sampler)
+# span_processor_with_probability = BatchSpanProcessor(ConsoleSpanExporter())
+# tracer_provider_with_probability.add_span_processor(span_processor_with_probability)
+# tracer_with_probability = trace.get_tracer(__name__, "probability")
+
+
+
+
+
+# RETRY_LIMIT = 5
+# RETRY_INTERVAL = 5  # seconds
+
+# def compress_data(data):
+#     return zlib.compress(data)
+
+# def send_data(client_socket, data):
+#     # First, send the length of the data
+#     client_socket.sendall(len(data).to_bytes(4, byteorder='big'))
+#     # Then, send the data
+#     client_socket.sendall(data)
+    
+# def send_file(client_socket, file_path):
+#     with open(file_path, 'rb') as file:
+#         while True:
+#             data = file.read(1024)
+#             if not data:
+#                 break
+#             compressed_data = compress_data(data)
+#             client_socket.send(compressed_data)
+#             client_socket.send(data)
+
+# def client_sender(directory):
+#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+#         attempts = 0
+#         while attempts < RETRY_LIMIT:
+#             try:
+#                 client.connect(("localhost", 9999))
+#                 break  # Successful connection
+#             except socket.error as e:
+#                 print(f"Connection failed: {e}. Retrying...")
+#                 time.sleep(RETRY_INTERVAL)
+#                 attempts += 1
+
+#         if attempts == RETRY_LIMIT:
+#             print("Failed to connect after several attempts.")
+#             return
+
+#         try:
+#             for file_name in os.listdir(directory):
+#                 file_path = os.path.join(directory, file_name)
+#                 send_file(client, file_path)
+#                 print(f"Sent {file_name}")
+#         except Exception as e:
+#             print(f"Error during file transfer: {e}")
+#         finally:
+#             print("Closing client connection")
+
+# if __name__ == "__main__":
+#     client_sender("test_files")
+
+
+import random
+import socket
+import time
+import os
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.sampling import Sampler, SamplingResult, Decision
+
+class CustomProbabilitySampler(Sampler):
+    def __init__(self, rate):
+        super().__init__()
+        self.rate = rate
+
+    def should_sample(self, context, trace_id, span_name, span_kind, parent_context, links):
+        if random.random() < self.rate:
+            return SamplingResult(Decision.RECORD_AND_SAMPLE)
+        return SamplingResult(Decision.DROP)
+
+    def get_description(self):
+        return f"CustomProbabilitySampler({self.rate})"
+
+
+
+# Always On Sampler (default sampler of TracerProvider)
+tracer_provider_always_on = TracerProvider()
+span_processor_always_on = BatchSpanProcessor(ConsoleSpanExporter())
+tracer_provider_always_on.add_span_processor(span_processor_always_on)
+tracer_always_on = trace.get_tracer(__name__, "always_on")
+
+# Custom Probability Sampler (40% sampling rate)
+probability_sampler = CustomProbabilitySampler(0.4)
+tracer_provider_with_probability = TracerProvider(sampler=probability_sampler)
+span_processor_with_probability = BatchSpanProcessor(ConsoleSpanExporter())
+tracer_provider_with_probability.add_span_processor(span_processor_with_probability)
+tracer_with_probability = trace.get_tracer(__name__, "probability")
+
+
+
+
+
+RETRY_LIMIT = 5
+RETRY_INTERVAL = 5  # seconds
+
+def send_file(client_socket, file_path):
+    with open(file_path, 'rb') as file:
+        while True:
+            data = file.read(1024)
+            if not data:
+                break
+            client_socket.send(data)
+
+def client_sender(directory):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client:
+        attempts = 0
+        while attempts < RETRY_LIMIT:
+            try:
+                client.connect(("localhost", 9999))
+                break  # Successful connection
+            except socket.error as e:
+                print(f"Connection failed: {e}. Retrying...")
+                time.sleep(RETRY_INTERVAL)
+                attempts += 1
+
+        if attempts == RETRY_LIMIT:
+            print("Failed to connect after several attempts.")
+            return
+
+        try:
+            for file_name in os.listdir(directory):
+                file_path = os.path.join(directory, file_name)
+                send_file(client, file_path)
+                print(f"Sent {file_name}")
+        except Exception as e:
+            print(f"Error during file transfer: {e}")
+        finally:
+            print("Closing client connection")
+
+if __name__ == "__main__":
+    client_sender("test_files")
